@@ -1,0 +1,141 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage[spanish]{babel}
+\usepackage{enumitem}
+\usepackage{hyperref}
+
+\geometry{a4paper, margin=0.9in}
+\linespread{1.15}
+
+% Definiciones de teorema y proposición
+\newtheorem{theorem}{Teorema}
+\newtheorem{proposition}[theorem]{Proposición}
+\newtheorem{corollary}[theorem]{Corolario}
+
+\title{El Algoritmo Newton-Bernstein para Interpolación Lagrangiana en Una Dimensión: \\
+Fundamentos, Implementación y Desempeño Numérico}
+\author{Basado en Ainsworth y Sánchez}
+\date{\vspace{-1em}}
+
+\begin{document}
+
+\maketitle
+
+\section{Introducción: Motivación del Problema}
+
+La representación de polinomios mediante puntos de control de Bézier en la base de Bernstein-Bézier es fundamental para el diseño geométrico asistido por computadora (CAGD) y el análisis de elementos finitos de alto orden. El problema fundamental consiste en: dado un conjunto de nodos distintos $\{x_j\}_{j=0}^n$ y datos $\{f_j\}_{j=0}^n$, encontrar los puntos de control $\{c_k\}_{k=0}^n$ tales que el polinomio de Bernstein-Bézier
+$$p(x) = \sum_{k=0}^n c_k B_k^n(x)$$
+satisfaga las condiciones de interpolación $p(x_j) = f_j$ para $j = 0, \ldots, n$.
+
+El sistema lineal resultante se puede expresar como
+\begin{equation}
+\sum_{k=0}^n c_k B_k^n(x_j) = f_j, \quad j = 0, \ldots, n,
+\end{equation}
+donde los coeficientes $B_k^n(x)$ forman la \textbf{matriz de Bernstein-Vandermonde}. Aunque esta matriz heredera la estructura de positividad total de la base de Bernstein, sufre del \textit{mal condicionamiento numérico}. Por ejemplo, para $n=15$ nodos uniformes, el número de condición es $\kappa(A) \approx 2.3 \times 10^6$, lo que hace que los solucionadores matriciales directos estándar fallen catastróficamente.
+
+Anteriormente, Marco y Martínez (2007) propusieron un algoritmo basado en la eliminación de Neville que alcanza complejidad óptima $O(n^2)$ aprovechando la positividad total. Sin embargo, este algoritmo requiere una derivación altamente técnica y está fuertemente acoplado al caso univariado, limitando su generalización.
+
+El algoritmo \textbf{Newton-Bernstein} (Ainsworth y Sánchez, 2015) ofrece una alternativa superior: mantiene complejidad $O(n^2)$, posee una derivación elegante basada únicamente en interpolación de Lagrange clásica, y permite una generalización inmediata a múltiples dimensiones y geometrías complejas.
+
+\section{Algoritmo Newton-Bernstein: Fundamentos Teóricos}
+
+\subsection{Estrategia de Construcción Recursiva}
+
+La clave del algoritmo reside en construir el interpolante mediante la \textbf{forma de Newton} de forma recursiva:
+$$p_k(x) = \sum_{j=0}^k f[x_0, \ldots, x_j] w_j(x),$$
+donde $f[x_0, \ldots, x_j]$ son las diferencias divididas de Lagrange y $w_j(x) = \prod_{i=0}^{j-1}(x-x_i)$ son los polinomios base de Newton.
+
+Cada $p_k$ se obtiene de $p_{k-1}$ mediante la relación:
+$$p_k(x) = p_{k-1}(x) + w_k(x) f[x_0, \ldots, x_k].$$
+
+Para implementar esto en la base de Bernstein, debemos expresar tanto $p_k$ como $w_k$ mediante sus puntos de control de Bernstein $c_j^{(k)}$ y $w_j^{(k)}$ respectivamente.
+
+\subsection{Recurrencias Fundamentales}
+
+El algoritmo se fundamenta en dos recurrencias elegantes derivadas de las propiedades de elevación de grado en polinomios de Bernstein:
+
+\begin{proposition}[Recurrencia para $w_k(x)$]
+Los puntos de control de Bernstein de $w_k(x) = (x-x_{k-1})w_{k-1}(x)$ están dados por:
+$$w_j^{(k)} = \frac{j}{k} w_{j-1}^{(k-1)} (1-x_{k-1}) - \frac{k-j}{k} w_j^{(k-1)} x_{k-1},$$
+con inicialización $w_0^{(0)} = 1$ y convención $w_{-1}^{(k-1)} = w_k^{(k-1)} = 0$.
+\end{proposition}
+
+\begin{proposition}[Recurrencia para $p_k(x)$]
+Los puntos de control de Bernstein del interpolante $p_k(x)$ se actualizan mediante:
+$$c_j^{(k)} = \frac{j}{k} c_{j-1}^{(k-1)} + \frac{k-j}{k} c_j^{(k-1)} + w_j^{(k)} f[x_0, \ldots, x_k],$$
+donde la primera parte elevan el grado de $p_{k-1}$ de $k-1$ a $k$, y la segunda parte agrega la contribución del término nuevo en la forma de Newton.
+\end{proposition}
+
+Ambas recurrencias surgen de dos identidades fundamentales de Bernstein:
+$$B_1^1 B_k^n = \frac{k+1}{n+1} B_{k+1}^{n+1}, \quad B_0^1 B_k^n = \left(1 - \frac{k}{n+1}\right) B_k^{n+1}.$$
+
+\subsection{Análisis de Complejidad}
+
+El Algoritmo 1 implementa estas recurrencias para $k=0,\ldots,n$. Para cada iteración $k$:
+\begin{itemize}
+    \item Calcular $w_j^{(k)}$ requiere $O(k)$ operaciones
+    \item Calcular diferencia dividida $f[x_0, \ldots, x_k]$ requiere $O(k)$ operaciones  
+    \item Calcular $c_j^{(k)}$ requiere $O(k)$ operaciones
+\end{itemize}
+La complejidad total es $\sum_{k=0}^n O(k) = O(n^2)$, idéntica al algoritmo de Marco-Martínez pero con derivación mucho más transparente.
+
+\begin{theorem}[Ainsworth y Sánchez]
+El Algoritmo 1 (Newton-Bernstein) calcula correctamente los puntos de control de Bernstein del interpolante Lagrangiano en complejidad $O(n^2)$ con estabilidad numérica comparable a métodos especializados.
+\end{theorem}
+
+\section{Desempeño Numérico y Generalización}
+
+\subsection{Validación Experimental}
+
+La superioridad del algoritmo Newton-Bernstein se demuestra mediante ejemplos numéricos. Considere el Ejemplo 2.1 del artículo original: un polinomio de grado $n=15$ con nodos uniformes en $[0,1]$, donde la matriz de Bernstein-Vandermonde tiene número de condición extremadamente alto $\kappa(A) = 2.3 \times 10^6$.
+
+La siguiente tabla comparar errores relativos en norma $L^2$ para distintos vectores de datos:
+
+\begin{table}[h!]
+\centering
+\caption{Errores relativos en caso mal condicionado ($n=15$, $\kappa(A)=2.3\times10^6$)}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Dato} & $\mathbf{A \setminus f}$ & \textbf{Newton-Bernstein} & \textbf{Marco-Martínez} \\
+\midrule
+$f_1=(1,\ldots,1)^T$ & $7.2 \times 10^{-13}$ & $7.9 \times 10^{-14}$ & $9.2 \times 10^{-13}$ \\
+$f_2=(2,1,\ldots,2)^T$ & $7.1 \times 10^{-11}$ & $5.9 \times 10^{-16}$ & $1.0 \times 10^{-15}$ \\
+$f_3=\text{Fourier}$ & $7.1 \times 10^{-11}$ & $5.2 \times 10^{-16}$ & $4.9 \times 10^{-16}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El solucionador estándar de Matlab (\texttt{$\backslash$}) produce errores de hasta $10^{-11}$, mientras que ambos algoritmos especializados mantienen precisión cerca de la máquina epsilon. Esto confirma que la complejidad $O(n^2)$ no es solo una ventaja teórica sino también práctica.
+
+Adicionalmente, en casos con nodos de Chebyshev ($n=25$, $\kappa(A) = 2.1 \times 10^7$), el algoritmo Newton-Bernstein permite reordenar flexiblemente los nodos (por ejemplo, en orden de Leja) para mejorar condicionamiento, una flexibilidad que el algoritmo de Marco-Martínez no posee.
+
+\subsection{Generalización a Múltiples Dimensiones}
+
+La ventaja decisiva del algoritmo Newton-Bernstein es su \textbf{generalización natural} a problemas multidimensionales. Para interpolación en rejillas de producto tensorial bidimensional, basta aplicar el algoritmo univariado de forma iterativa:
+
+\begin{enumerate}
+    \item En cada línea $y = y_j$ fija, construir el interpolante univariado $p^{(j)}(x)$ a partir de los datos $f(\cdot, y_j)$.
+    \item Resolver un problema de interpolación univariada para la variable $y$, donde los datos de interpolación son los polinomios $p^{(j)}(x)$ del paso anterior.
+\end{enumerate}
+
+El paso 2 es un problema de interpolación univariada en espacio vectorial de polinomios, que el Algoritmo 1 resuelve directamente sin modificación (solo interpretando $\mathcal{X}$ como espacio de polinomios en lugar de números reales). Esta construcción se extiende trivialmente a tres dimensiones y, en general, a interpolación en símplices en $\mathbb{R}^d$.
+
+Para el caso más complejo de interpolación en un símplex, la solución se reduce a resolver una secuencia de problemas univariados mediante la fórmula:
+$$p(x) = \sum_{j=0}^n q_j(x) \prod_{i=j+1}^n \Gamma_i(x), \quad x \in T,$$
+donde cada $q_j$ es solución de un problema univariado en una línea. La contribución de Manuel A. Sánchez radica precisamente en esta generalización, permitiendo aplicar el algoritmo a geometrías complejas sin cambios fundamentales.
+
+En casos multidimensionales con números de condición extremos (ej. $\kappa(A_2) = 1.4 \times 10^{13}$ para producto tensorial $n=15$), la precisión del algoritmo Newton-Bernstein es significativamente superior a solucionadores matriciales directos, demostrando que la estrategia recursiva es robusta incluso bajo mal condicionamiento severo.
+
+\section{Conclusión}
+
+El algoritmo Newton-Bernstein representa un avance significativo para el cálculo de interpolantes Lagrangiano en base de Bernstein-Bézier. Combina tres virtudes: (1) \textbf{complejidad óptima} $O(n^2)$, idéntica a métodos especializados previos pero con derivación elemental; (2) \textbf{estabilidad numérica superior}, demostrando precisión de máquina epsilon incluso en casos severamente mal condicionados; (3) \textbf{generalización inmediata} a múltiples dimensiones y geometrías arbitrarias sin cambios algorítmicos fundamentales.
+
+Estas propiedades hacen que el algoritmo sea especialmente valioso para análisis de elementos finitos de alto orden, donde interpolantes de alta precisión en bases Bernstein son requeridas. La implementación en Python facilita su adopción en comunidades científicas, mientras que su elegancia teórica lo hace atractivo para investigación matemática y numérica.
+
+Futuras investigaciones pueden explorar: adaptatividad en selección de nodos (órdenes de Leja variables), aceleración mediante GPUs en aplicaciones masivas, e integración con métodos de splines isogeométricos.
+
+\end{document}
