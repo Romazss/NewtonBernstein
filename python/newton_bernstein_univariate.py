@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.special import comb
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Union, List, Callable
 import matplotlib.pyplot as plt
 
 
