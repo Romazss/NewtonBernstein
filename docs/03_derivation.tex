@@ -1,0 +1,77 @@
+\section{Derivación Formal del Algoritmo}
+
+\subsection{Paso 1: Forma de Newton del Interpolante}
+
+Usamos el enfoque constructivo: construir el interpolante de grado $k$ usando $k+1$ nodos, e incrementar $k$ de 0 a $n$.
+
+Defina $p_k(x)$ como el interpolante único de grado $k$ que pasa por los primeros $k+1$ puntos. En forma de Newton:
+\begin{equation}\label{eq:newton_form}
+p_k(x) = \sum_{j=0}^k f[x_0, \ldots, x_j] \, w_j(x)
+\end{equation}
+donde:
+\begin{align}
+w_0(x) &= 1 \\
+w_j(x) &= \prod_{i=0}^{j-1} (x - x_i) \quad (j \geq 1) \\
+f[x_0, \ldots, x_j] &= \text{diferencia dividida }j\text{-ésima}
+\end{align}
+
+\textit{Clave:} $p_k$ se construye de forma estable calculando diferencias divididas y evaluando productos $w_j$.
+
+\subsection{Paso 2: Representación de Bernstein de $w_j$}
+
+Para implementar el paso anterior en base de Bernstein, necesitamos representar $w_j(x) = \prod_{i=0}^{j-1}(x - x_i)$ como:
+\begin{equation}\label{eq:wj_bernstein}
+w_j(x) = \sum_{k=0}^j w_k^{(j)} B_k^j(x)
+\end{equation}
+
+\textbf{Relación Recursiva:} Si conocemos $w_j^{(j-1)}(x)$, entonces:
+\begin{equation}
+w_j(x) = (x - x_{j-1}) w_{j-1}(x)
+\end{equation}
+
+Usando la descomposición $x - x_{j-1} = (1-x_{j-1})B_1^1 - x_{j-1}B_0^1$ y las propiedades (2.1)-(2.2), obtenemos:
+\begin{align}
+w_j(x) &= (1-x_{j-1})B_1^1 w_{j-1} - x_{j-1}B_0^1 w_{j-1} \\
+&= \sum_{k=0}^j \left[\frac{k}{j}w_{k-1}^{(j-1)}(1-x_{j-1}) - \frac{j-k}{j}w_k^{(j-1)}x_{j-1}\right] B_k^j(x)
+\end{align}
+
+Esto da la \textbf{fórmula recursiva para los coeficientes}:
+\begin{equation}\label{eq:wk_recursive}
+w_k^{(j)} = \frac{k}{j}w_{k-1}^{(j-1)}(1-x_{j-1}) - \frac{j-k}{j}w_k^{(j-1)}x_{j-1}
+\end{equation}
+con condiciones de frontera: $w_0^{(0)} = 1$ y $w_{-1}^{(j-1)} = w_j^{(j-1)} = 0$.
+
+\subsection{Paso 3: Elevación de Grado y Construcción de $p_k$}
+
+Por la relación recursiva $p_k(x) = p_{k-1}(x) + w_k(x) f[x_0, \ldots, x_k]$, cuando pasamos de grado $k-1$ a grado $k$:
+
+1. Elevamos $p_{k-1}$ a grado $k$ usando (2.5):
+\begin{equation}
+\tilde{c}_j^{(k)} = \frac{j}{k}c_{j-1}^{(k-1)} + \frac{k-j}{k}c_j^{(k-1)}
+\end{equation}
+
+2. Sumamos el término nuevo $w_k(x) f[x_0, \ldots, x_k]$ (de grado $k$):
+\begin{equation}
+c_j^{(k)} = \tilde{c}_j^{(k)} + w_j^{(k)} f[x_0, \ldots, x_k]
+\end{equation}
+
+Combinando ambos pasos:
+\begin{equation}\label{eq:cj_recursive}
+c_j^{(k)} = \frac{j}{k}c_{j-1}^{(k-1)} + \frac{k-j}{k}c_j^{(k-1)} + w_j^{(k)} f[x_0, \ldots, x_k]
+\end{equation}
+con condiciones iniciales: $c_0^{(0)} = f_0$ y convención: $c_{-1}^{(k-1)} = c_k^{(k-1)} = 0$.
+
+\subsection{Paso 4: Actualización de Diferencias Divididas}
+
+Para calcular eficientemente las diferencias divididas, actualizamos en cada iteración usando la fórmula estándar:
+\begin{equation}\label{eq:divided_diffs}
+f[x_k, \ldots, x_j] := \frac{f[x_{k+1}, \ldots, x_j] - f[x_k, \ldots, x_{j-1}]}{x_j - x_k}
+\end{equation}
+
+\textbf{Resumen de la Derivación:} 
+Las ecuaciones (3.3), (3.5) y (3.7) son las \textit{tres recurrencias} que necesitamos:
+\begin{enumerate}
+\item Fórmula para coeficientes de $w_j$ (ecuación 3.3)
+\item Fórmula para coeficientes de $p_j$ (ecuación 3.5)  
+\item Actualización de diferencias divididas (ecuación 3.7)
+\end{enumerate}

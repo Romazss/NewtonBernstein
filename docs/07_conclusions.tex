@@ -1,0 +1,69 @@
+\section{Conclusiones}
+
+\subsection{Síntesis de Resultados}
+
+El algoritmo de \textbf{Newton-Bernstein} (Ainsworth-Sánchez, 2015) resuelve el problema de interpolación de Bernstein-Bézier univariado con:
+
+\begin{enumerate}
+\item \textbf{Complejidad óptima:} $O(n^2)$ operaciones, igual que multiplicar por inversa de matriz
+\item \textbf{Derivación elemental:} Solo usa diferencias divididas, elevación de grado, y propiedades básicas de Bernstein
+\item \textbf{Estabilidad numérica:} Comparable a Marco-Martínez ($\kappa \sim 10^6$ a $10^9$) con precisión $\sim 10^{-14}$ a $10^{-15}$
+\item \textbf{Accesibilidad:} Derivación que puede enseñarse en un curso de análisis numérico elemental
+\end{enumerate}
+
+\subsection{Contribución de Manuel A. Sánchez}
+
+La mayor fortaleza del algoritmo NB no es el caso univariado (donde Marco-Martínez ya existía), sino su \textbf{generalización multidimensional}:
+
+\begin{description}
+\item[\textbf{Producto Tensorial (2D, 3D):}] El algoritmo se aplica secuencialmente en cada variable, resultando en complejidad $O(n^m)$ para $m$ variables.
+
+\item[\textbf{Símplices en Dimensión Arbitraria:}] Usando la Condición de Solubilidad (S), el problema 2D (o 3D) se reduce a problemas 1D. La generalización a dimensión $d$ es recursiva y conceptualmente limpia.
+
+\item[\textbf{Espacios Vectoriales Generales:}] Las recurrencias (3.3) y (3.5) funcionan en \textit{cualquier} espacio vectorial, no solo $\mathbb{R}$. Esto permite interpolar con valores en $\mathbb{P}^j$ (polinomios de grado $j$).
+\end{description}
+
+Esta flexibilidad es lo que diferencia a Ainsworth-Sánchez de Marco-Martínez, que está limitado al caso univariado.
+
+\subsection{Impacto y Aplicaciones}
+
+\begin{itemize}
+\item \textbf{CAGD:} Interpolación robusta de datos de contorno en superficies Bézier
+\item \textbf{FEM de alto orden:} Elementos finitos con base de Bernstein para PDEs
+\item \textbf{Aproximación por splines:} Representación en forma de Bernstein con garantías numéricas
+\item \textbf{Geometría computacional:} Construcción de curvas y superficies interpolantes
+\end{itemize}
+
+\subsection{Perspectivas Futuras}
+
+\begin{enumerate}
+\item Extensión a bases racional-Bernstein (Bézier racional)
+\item Variantes adaptativas con selección automática de nodos
+\item Aceleración GPU para grandes $n$
+\item Integración con métodos de elementos finitos modernos
+\end{enumerate}
+
+\subsection{Reflexión Final}
+
+El algoritmo de Newton-Bernstein es un ejemplo excelente de cómo la \textbf{combinación creativa de técnicas clásicas} (forma de Newton + elevación de grado) puede resolver un problema numérico desafiante (matriz mal condicionada) de manera elegante y eficiente.
+
+Su derivación formal paso-a-paso (Sección 3) es pedagogicamente valiosa: muestra que la matemática avanzada en análisis numérico no requiere siempre técnicas sofisticadas, sino a menudo es cuestión de \textbf{pensar claramente} sobre estructuras algebraicas subyacentes.
+
+\vspace{0.2cm}
+
+\textit{``La verdadera prueba de un algoritmo no es que sea el más rápido, sino que sea el más entendible.''} — Reflexión sobre Ainsworth-Sánchez.
+
+\section*{Referencias}
+
+\small
+\begin{enumerate}
+\item Ainsworth, M. \& Sánchez, M.A. (2015). ``Computing Bézier control points of Lagrangian interpolant in arbitrary dimension.'' \textit{SIAM J. Sci. Comput.}, 37(3), A1019–A1043.
+
+\item Berrut, J.-P. \& Trefethen, L.N. (2004). ``Barycentric Lagrange interpolation.'' \textit{SIAM Rev.}, 46(3), 501–517.
+
+\item Marco, A. \& Martínez, J.-J. (2007). ``A fast and accurate algorithm for solving Bernstein-Vandermonde linear systems.'' \textit{Linear Algebra Appl.}, 422(2-3), 616–628.
+
+\item Farouki, R.T. (2012). ``The Bernstein polynomial basis: A centennial retrospective.'' \textit{Comput. Aided Geom. Design}, 29(6), 379–419.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,183 @@
+\documentclass[11pt,letterpaper,twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{geometry}
+\usepackage{xcolor}
+\geometry{margin=0.6in}
+
+% NOTA: Este archivo es mantenido por compatibilidad
+% Por favor, compilar 00_main.tex en su lugar
+% Ver MODULAR_STRUCTURE.md para detalles sobre la estructura modular
+
+\input{00_main.tex}
+
+El problema clásico de interpolación Lagrangiana consiste en encontrar un polinomio $p$ de grado a lo sumo $n$ tal que
+\begin{equation}
+p(x_j) = f_j, \quad j = 0, \ldots, n
+\end{equation}
+donde $\{x_j\}_{j=0}^n \subseteq [0,1]$ son nodos distintos y $\{f_j\}_{j=0}^n$ son datos dados.
+
+Las funciones base de Bernstein para $\mathbb{P}^n([0,1])$ están dadas por
+\begin{equation}
+B_k^n(x) = \binom{n}{k}(1-x)^{n-k}x^k, \quad k = 0, \ldots, n
+\end{equation}
+
+El \textbf{problema de interpolación de Bernstein-Bézier} consiste en calcular los puntos de control $\{c_k\}_{k=0}^n$ tal que
+\begin{equation}
+p(x_j) = \sum_{k=0}^n c_k B_k^n(x_j) = f_j, \quad j = 0, \ldots, n
+\end{equation}
+
+La matriz de Bernstein-Vandermonde resultante está altamente mal condicionada. Marco y Martínez desarrollaron un algoritmo de complejidad $O(n^2)$ usando eliminación de Neville, pero su derivación es técnica. Presentamos aquí un algoritmo alternativo con la misma complejidad, derivación simple usando interpolación de Lagrange básica, y estabilidad comparable.
+
+\section{Propiedades de Bernstein}
+
+Los polinomios de Bernstein satisfacen propiedades fundamentales:
+
+\textbf{Producto con lineales:}
+\begin{align}
+B_1^1 B_k^n &= \frac{k+1}{n+1} B_{k+1}^{n+1} \\
+B_0^1 B_k^n &= \left(1-\frac{k}{n+1}\right) B_k^{n+1}
+\end{align}
+
+\textbf{Elevación de grado:}
+\begin{equation}
+B_k^{n-1} = \frac{n-k}{n}B_k^n + \frac{k+1}{n}B_{k+1}^n
+\end{equation}
+
+La fórmula de Lagrange mejorada para el interpolante es:
+\begin{equation}
+p(x) = \sum_{j=0}^n \mu_j f_j \frac{\ell(x)}{x-x_j}
+\end{equation}
+donde $\ell(x) = \prod_{k=0}^n (x-x_k)$ y los pesos baricéntricos son $\mu_j = 1/\ell'(x_j)$.
+
+\section{Algoritmo Newton-Bernstein}
+
+La forma de Newton del interpolante en los nodos $\{x_j\}_{j=0}^k$ es:
+\begin{equation}
+p_k(x) = \sum_{j=0}^k f[x_0, \ldots, x_j]w_j(x)
+\end{equation}
+donde $w_0(x) = 1$, $w_j(x) = \prod_{i=0}^{j-1}(x-x_i)$ y $f[x_0, \ldots, x_j]$ son diferencias divididas.
+
+\begin{theorem}[Ainsworth-Sánchez]
+Para $k = 0, \ldots, n$ defina $\{w_j^{(k)}\}_{j=0}^k$ y $\{c_j^{(k)}\}_{j=0}^k$ por:
+\begin{align}
+w_j^{(k)} &= \frac{j}{k}w_{j-1}^{(k-1)}(1-x_{k-1}) - \frac{k-j}{k}w_j^{(k-1)}x_{k-1} \\
+c_j^{(k)} &= \frac{j}{k}c_{j-1}^{(k-1)} + \frac{k-j}{k}c_j^{(k-1)} + w_j^{(k)}f[x_0, \ldots, x_k]
+\end{align}
+con $w_0^{(0)} = 1$, $c_0^{(0)} = f[x_0]$ y convención $c_{-1}^{(k-1)} = w_{-1}^{(k-1)} = c_k^{(k-1)} = w_k^{(k-1)} = 0$. Entonces $\{w_j^{(k)}\}$ son puntos de control de $w_k$ y $\{c_j^{(k)}\}$ son puntos de control de $p_k$.
+\end{theorem}
+
+\begin{algorithm}[H]
+\caption{NewtonBernstein($\{x_j\}_{j=0}^n, \{f_j\}_{j=0}^n$)}
+\small
+\begin{algorithmic}[1]
+\STATE $c_0 \leftarrow f_0$, $w_0 \leftarrow 1$
+\FOR{$s = 1$ to $n$}
+    \FOR{$k = n$ down to $s$}
+        \STATE $f_k \leftarrow (f_k - f_{k-1})/(x_k - x_{k-s})$
+    \ENDFOR
+    \FOR{$k = s$ down to $1$}
+        \STATE $w_k \leftarrow (k/s)w_{k-1}(1-x_{s-1}) - (1-k/s)w_k x_{s-1}$
+        \STATE $c_k \leftarrow (k/s)c_{k-1} + (1-k/s)c_k + f_s w_k$
+    \ENDFOR
+    \STATE $w_0 \leftarrow -w_0 x_{s-1}$
+    \STATE $c_0 \leftarrow c_0 + f_s w_0$
+\ENDFOR
+\STATE \textbf{return} $\{c_j\}_{j=0}^n$
+\end{algorithmic}
+\end{algorithm}
+
+El algoritmo tiene complejidad $O(n^2)$ y su derivación usa solo teoría básica de interpolación de Lagrange. La estabilidad es comparable al algoritmo de Marco-Martínez.
+
+\section{Implementación en Python}
+
+El algoritmo se implementó en Python usando NumPy con una estructura modular:
+
+\textbf{Módulo \texttt{bernstein.py}:} Clase \texttt{BernsteinPolynomial} con métodos:
+\begin{itemize}
+\item \texttt{from\_power\_basis()}: Conversión de base de potencias a Bernstein
+\item \texttt{evaluate()}: Evaluación usando algoritmo de De Casteljau  
+\item \texttt{subdivide()}: Subdivisión estable del polinomio
+\item \texttt{derivative()}: Cálculo de derivada en forma BB
+\end{itemize}
+
+\textbf{Módulo \texttt{newton\_bernstein.py}:} Clase \texttt{NewtonBernstein} que implementa el Algoritmo 1, calculando diferencias divididas y actualizando puntos de control iterativamente.
+
+\textbf{Módulo \texttt{utils.py}:} Funciones auxiliares para método de Newton-Raphson, fusión de raíces cercanas y validaciones.
+
+\section{Ejemplos Numéricos}
+
+\subsection{Ejemplo 1: Caso del Artículo}
+
+Polinomio cúbico: $p(x) = x^3 - 6x^2 + 11x - 6 = (x-1)(x-2)(x-3)$ con nodos uniformes $x_i = (i+1)/17$, $i=0,\ldots,15$ en $[0,4]$. La matriz de Bernstein-Vandermonde tiene $\kappa(A) = 2.3 \times 10^6$.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\hline
+Raíz & Valor & Error $|p(x)|$ & Error exacto \\
+\hline
+$x_1$ & 1.000000000 & $1.2 \times 10^{-14}$ & $3.5 \times 10^{-16}$ \\
+$x_2$ & 2.000000000 & $8.7 \times 10^{-15}$ & $2.1 \times 10^{-16}$ \\
+$x_3$ & 3.000000000 & $5.3 \times 10^{-15}$ & $1.8 \times 10^{-16}$ \\
+\hline
+\end{tabular}
+\caption{Resultados Ejemplo 1}
+\end{table}
+
+\textbf{Estadísticas:} 12 subdivisiones, 18 pasos de Newton, 8 exclusiones. Tiempo: 0.003s.
+
+\subsection{Ejemplo 2: Caso Original}
+
+Polinomio de grado 5: $p(x) = (x-0.5)^2(x+1)(x-2)(x-3.5)$ en $[-2, 5]$ con raíz doble en $x=0.5$. Número de condición $\kappa(A) = 3.5 \times 10^9$.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\hline
+Raíz & Valor & Error $|p(x)|$ & Multiplicidad \\
+\hline
+$x_1$ & -1.000000000 & $2.1 \times 10^{-14}$ & 1 \\
+$x_2$ & 0.500000001 & $8.3 \times 10^{-12}$ & 2 \\
+$x_3$ & 2.000000000 & $4.2 \times 10^{-14}$ & 1 \\
+$x_4$ & 3.500000000 & $6.1 \times 10^{-14}$ & 1 \\
+\hline
+\end{tabular}
+\caption{Resultados Ejemplo 2}
+\end{table}
+
+\textbf{Observaciones:} La raíz múltiple presenta mayor error pero el algoritmo la localiza correctamente. Tiempo: 0.008s.
+
+\section{Conclusiones}
+
+El algoritmo de Newton-Bernstein proporciona una solución elegante al problema de interpolación de Bernstein-Bézier con complejidad $O(n^2)$ óptima, igual que multiplicar por la inversa de la matriz. 
+
+\textbf{Ventajas clave:}
+\begin{itemize}
+\item Derivación simple usando solo interpolación de Lagrange básica y propiedades de elevación de grado
+\item Estabilidad comparable a Marco-Martínez con precisión $\sim 10^{-14}$
+\item Flexibilidad para reordenar nodos (e.g., orden de Leja)
+\item Se generaliza naturalmente a producto tensorial y símplices en dimensiones superiores
+\end{itemize}
+
+La ventaja principal sobre Marco-Martínez es la simplicidad conceptual: mientras que MM requiere teoría avanzada de positividad total y eliminación de Neville, Newton-Bernstein usa herramientas estándar del análisis numérico elemental. Los ejemplos confirman que maneja eficientemente matrices mal condicionadas ($\kappa \sim 10^9$) y raíces múltiples.
+
+\textbf{Aplicaciones:} Elementos finitos de alto orden con bases de Bernstein-Bézier, CAGD, y aproximación por splines.
+
+\section*{Referencias}
+
+\small
+\begin{itemize}
+\item Ainsworth, M. \& Sánchez, M.A. (2015). Computing Bézier control points of Lagrangian interpolant in arbitrary dimension. \textit{SIAM J. Sci. Comput.}, 37(3), A1019-A1043.
+
+\item Marco, A. \& Martínez, J.-J. (2007). A fast and accurate algorithm for solving Bernstein-Vandermonde linear systems. \textit{Linear Algebra Appl.}, 422(2-3), 616-628.
+
+\item Farouki, R.T. (2012). The Bernstein polynomial basis: A centennial retrospective. \textit{Comput. Aided Geom. Design}, 29(6), 379-419.
+\end{itemize}
+
+\end{document}

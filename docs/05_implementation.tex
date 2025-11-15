@@ -1,0 +1,54 @@
+\section{Implementación en Python}
+
+El algoritmo se codificó modularmente en Python siguiendo la estructura de la derivación matemática:
+
+\textbf{Módulo \texttt{bernstein.py}:} 
+Clase \texttt{BernsteinPolynomial} que encapsula operaciones de Bernstein:
+\begin{itemize}
+\item \texttt{from\_power\_basis()}: Conversión desde base monomial
+\item \texttt{evaluate()}: De Casteljau (3.3) $\Rightarrow$ estable
+\item \texttt{subdivide()}: Descomposición usando De Casteljau
+\item \texttt{derivative()}: Recurrencia para derivada
+\item \texttt{bounds()}: Envolvente convexa
+\end{itemize}
+
+\textbf{Módulo \texttt{newton\_bernstein.py}:}
+Clase \texttt{NewtonBernstein} implementa el Algoritmo 4.1 directamente. Mantiene:
+\begin{itemize}
+\item Arrays $\{f_k\}$ para diferencias divididas
+\item Arrays $\{w_k\}$ para coef. de $w_j$
+\item Arrays $\{c_k\}$ para coef. de $p_j$
+\item Método \texttt{find\_roots()}: para encontrar raíces en intervalo
+\end{itemize}
+
+\textbf{Módulo \texttt{utils.py}:}
+Funciones auxiliares: Newton-Raphson, validación de nodos, estadísticas.
+
+\textbf{Ejemplo de uso:}
+\begin{verbatim}
+import numpy as np
+from src.newton_bernstein import NewtonBernstein
+
+# Polinomio: x³ - 6x² + 11x - 6
+coeffs = np.array([-6, 11, -6, 1])
+solver = NewtonBernstein(coeffs)
+
+# Nodos uniformes
+x = np.linspace(0, 4, 16)
+f = np.polyval(coeffs[::-1], x)
+
+# Calcular raíces
+roots = solver.find_roots((0, 4))
+\end{verbatim}
+
+\subsection{Integración con Teoría}
+
+La implementación respeta exactamente la derivación:
+\begin{itemize}
+\item \textbf{Línea 5-7 Alg 4.1:} Bucle de diferencias divididas
+\item \textbf{Línea 8-10 Alg 4.1:} Recurrencia (3.3) para $w_k^{(s)}$
+\item \textbf{Línea 9 Alg 4.1:} Recurrencia (3.5) para $c_k^{(s)}$
+\item \textbf{Línea 11-12 Alg 4.1:} Actualización frontera ($w_0$, $c_0$)
+\end{itemize}
+
+Esta correspondencia directa entre teoría e implementación hace que el código sea \textbf{verificable y auditable}.

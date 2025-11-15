@@ -1,0 +1,83 @@
+\section{Teorema Principal y Algoritmo}
+
+\begin{theorem}[Ainsworth-Sánchez, 2015]\label{thm:main}
+Sean $\{w_j^{(k)}\}$ y $\{c_j^{(k)}\}$ las sucesiones definidas por las recurrencias (3.3), (3.5) con condiciones iniciales $w_0^{(0)} = 1$, $c_0^{(0)} = f[x_0]$. Entonces:
+\begin{enumerate}
+\item $w_j^{(k)}$ son los coeficientes de Bernstein del polinomio $w_k(x) = \prod_{i=0}^{k-1}(x-x_i)$
+\item $c_j^{(k)}$ son los puntos de control de Bézier del interpolante de Newton $p_k(x) = \sum_{i=0}^k f[x_0, \ldots, x_i]w_i(x)$
+\end{enumerate}
+\end{theorem}
+
+\textit{Demostración (Bosquejo):} Se procede por inducción en $k$:
+
+\textbf{Base ($k=0$):} Trivial: $p_0(x) = f_0 = f[x_0]$ tiene coeficiente de Bernstein $c_0^{(0)} = f_0$.
+
+\textbf{Paso Inductivo:} Suponer cierto para $k-1$. Mostrar que es cierto para $k$:
+\begin{align}
+w_k(x) &= (x - x_{k-1})w_{k-1}(x) \quad \text{(definición)} \\
+&= [(1-x_{k-1})B_1^1 - x_{k-1}B_0^1] \sum_{j=0}^{k-1} w_j^{(k-1)} B_j^{k-1}(x) \\
+&\quad \text{(por hipótesis inductiva y descomposición lineal)} \\
+&= \sum_{j=0}^k \left[\frac{j}{k}w_{j-1}^{(k-1)}(1-x_{k-1}) - \frac{k-j}{k}w_j^{(k-1)}x_{k-1}\right] B_j^k(x)
+\end{align}
+usando las relaciones (2.3)-(2.4). Esto verifica (3.3).
+
+Para la parte $p_k$: por relación recursiva $p_k = p_{k-1} + w_k f[x_0,\ldots,x_k]$ y elevación de grado (2.5), se obtiene (3.5). \qed
+
+\subsection{Algoritmo Completo}
+
+\begin{algorithm}[H]
+\caption{NewtonBernstein($\{x_j\}_{j=0}^n, \{f_j\}_{j=0}^n$)}
+\label{alg:main}
+\small
+\begin{algorithmic}[1]
+\REQUIRE Nodos $\{x_j\}_{j=0}^n$ y datos $\{f_j\}_{j=0}^n$
+\ENSURE Puntos de control $\{c_j\}_{j=0}^n$ del interpolante de Bernstein
+\STATE $c_0 \leftarrow f_0$; \quad $w_0 \leftarrow 1$
+\FOR{$s = 1$ \TO $n$}
+    \COMMENT{Actualizar diferencias divididas}
+    \FOR{$k = n$ \DOWNTO $s$}
+        \STATE $f_k \leftarrow (f_k - f_{k-1})/(x_k - x_{k-s})$
+    \ENDFOR
+    \COMMENT{Actualizar coeficientes de Bernstein}
+    \FOR{$k = s$ \DOWNTO $1$}
+        \STATE $w_k \leftarrow (k/s)w_{k-1}(1-x_{s-1}) - ((s-k)/s)w_k x_{s-1}$
+        \STATE $c_k \leftarrow (k/s)c_{k-1} + ((s-k)/s)c_k + f_s w_k$
+    \ENDFOR
+    \STATE $w_0 \leftarrow -w_0 x_{s-1}$
+    \STATE $c_0 \leftarrow c_0 + f_s w_0$
+\ENDFOR
+\STATE \textbf{return} $\{c_j\}_{j=0}^n$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Análisis de Complejidad}
+
+\textbf{Operaciones:}
+\begin{itemize}
+\item Bucle externo: $n$ iteraciones
+\item Bucle interno de diferencias: $\sum_{s=1}^n (n-s+1) = O(n^2)$
+\item Bucle interno de actualización: $\sum_{s=1}^n s = O(n^2)$
+\end{itemize}
+
+\textbf{Complejidad Total:} $\boxed{O(n^2)}$ operaciones aritméticas, igual que la inversión de matriz por un método directo.
+
+\textbf{Ventaja sobre Marco-Martínez:} 
+\begin{itemize}
+\item MM usa eliminación de Neville + positividad total (técnica avanzada)
+\item NB usa solo diferencias divididas + elevación de grado (técnica elemental)
+\item Misma complejidad, mismo número de operaciones, derivación más transparente
+\end{itemize}
+
+\subsection{Contribución de Manuel A. Sánchez: Generalización Multidimensional}
+
+La belleza del algoritmo NB es su \textbf{extensibilidad}. Sánchez mostró que el algoritmo se extiende de forma natural a:
+
+\begin{enumerate}
+\item \textbf{Producto Tensorial (Sección 4):} Para polinomios en $\mathbb{P}^n([0,1]) \otimes \mathbb{P}^m([0,1])$, aplicar NB secuencialmente en cada variable.
+
+\item \textbf{Símplices en 2D (Sección 5):} Reducir el problema a una secuencia de problemas univariados usando la Condición de Solubilidad (S).
+
+\item \textbf{Dimensiones Arbitrarias (Sección 6):} Recursivamente, usando $(d-1)$-sub-símplices.
+\end{enumerate}
+
+La clave es que las \textit{recurrencias (3.3) y (3.5) funcionan en cualquier espacio vectorial}, no solo $\mathbb{R}$. Esto abre la posibilidad de interpolar polinomios (valores en $\mathbb{P}^j$) en lugar de escalares.

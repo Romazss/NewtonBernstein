@@ -1,0 +1,46 @@
+\section{Propiedades Fundamentales de Bernstein}
+
+Para desarrollar el algoritmo, necesitamos tres propiedades clave de los polinomios de Bernstein:
+
+\subsection{P1: Relaciones de Producto}
+
+Cualquier polinomio de grado 1 se puede escribir como:
+\begin{equation}
+x - x_0 = (1-x_0)B_1^1(x) - x_0 B_0^1(x)
+\end{equation}
+donde $B_1^1(x) = x$ y $B_0^1(x) = 1-x$.
+
+Al multiplicar un polinomio de Bernstein de grado $n$ por esta expresión, obtenemos:
+\begin{align}
+B_1^1(x) \cdot B_k^n(x) &= \frac{k+1}{n+1} B_{k+1}^{n+1}(x) \label{eq:product1} \\
+B_0^1(x) \cdot B_k^n(x) &= \frac{n+1-k}{n+1} B_k^{n+1}(x) \label{eq:product2}
+\end{align}
+
+\textit{Interpretación:} El producto de dos polinomios de Bernstein produce otro polinomio de Bernstein de grado incrementado.
+
+\subsection{P2: Elevación de Grado}
+
+Todo polinomio de grado $n-1$ puede expresarse en la base de Bernstein de grado $n$:
+\begin{equation}\label{eq:degree_elevation}
+B_k^{n-1}(x) = \frac{n-k}{n}B_k^n(x) + \frac{k+1}{n}B_{k+1}^n(x)
+\end{equation}
+
+\textit{Importancia:} Esta identidad permite pasar de grado $n-1$ a grado $n$ sin pérdida de información. Si $p_{n-1}(x) = \sum_{k=0}^{n-1} c_k^{(n-1)} B_k^{n-1}(x)$, entonces:
+\begin{equation}\label{eq:elevation_coeffs}
+p_{n-1}(x) = \sum_{k=0}^n \left(\frac{k}{n}c_{k-1}^{(n-1)} + \frac{n-k}{n}c_k^{(n-1)}\right) B_k^n(x)
+\end{equation}
+con la convención $c_{-1}^{(n-1)} = c_n^{(n-1)} = 0$.
+
+\subsection{P3: Fórmula de Lagrange Mejorada}
+
+El interpolante único en forma de Lagrange es:
+\begin{equation}\label{eq:lagrange_form}
+p(x) = \sum_{j=0}^n \mu_j f_j \frac{\ell(x)}{x - x_j}
+\end{equation}
+donde:
+\begin{align}
+\ell(x) &= \prod_{k=0}^n (x - x_k) \\
+\mu_j &= \frac{1}{\ell'(x_j)}
+\end{align}
+
+Esta forma es numéricamente estable cuando se usa con aritmética de precisión finita \cite{Berrut2004}.

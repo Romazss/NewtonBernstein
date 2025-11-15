@@ -1,0 +1,31 @@
+\section{Introducción}
+
+El problema clásico de interpolación Lagrangiana consiste en encontrar un polinomio $p \in \mathbb{P}^n([0,1])$ de grado a lo sumo $n$ tal que:
+\begin{equation}\label{eq:interpolation}
+p(x_j) = f_j, \quad j = 0, 1, \ldots, n
+\end{equation}
+donde $\{x_j\}_{j=0}^n \subseteq [0,1]$ son nodos de interpolación distintos y $\{f_j\}_{j=0}^n$ son datos dados.
+
+La solución única existe y puede representarse en varias bases. Elegir la \textbf{base de Bernstein} es ventajoso en aplicaciones de geometría computacional (CAGD), métodos de elementos finitos de alto orden y teoría de aproximación de \textit{splines}.
+
+\textbf{El Problema de Interpolación de Bernstein-Bézier:} Dado $\{x_j, f_j\}$, calcular los \textbf{puntos de control de Bézier} $\{c_k\}_{k=0}^n$ tales que el polinomio de Bernstein-Bézier
+\begin{equation}\label{eq:bb_interp}
+p(x) = \sum_{k=0}^n c_k B_k^n(x)
+\end{equation}
+satisfaga la condición (1.1), donde $B_k^n(x) = \binom{n}{k}(1-x)^{n-k}x^k$ son los polinomios base de Bernstein.
+
+\textbf{Desafío Numérico:} El sistema lineal asociado tiene matriz de Bernstein-Vandermonde:
+\begin{equation}
+A_{ij} = B_i^n(x_j) = \binom{n}{i}(1-x_j)^{n-i}x_j^i
+\end{equation}
+Esta matriz está \textbf{altamente mal condicionada} (típicamente $\kappa(A) \sim 10^6$ a $10^{13}$).
+
+\textbf{Contribuciones Previas:} Marco y Martínez (2007) desarrollaron un algoritmo $O(n^2)$ usando eliminación de Neville y propiedades de positividad total, pero la derivación es técnica y el algoritmo se limita al caso univariado.
+
+\textbf{La Solución de Ainsworth-Sánchez:} Se presenta aquí un algoritmo alternativo con:
+\begin{itemize}
+\item \textbf{Misma complejidad} $O(n^2)$
+\item \textbf{Derivación elemental} usando solo interpolación de Lagrange básica
+\item \textbf{Estabilidad comparable} a Marco-Martínez
+\item \textbf{Generalización natural} a dimensiones arbitrarias (contribución de M.A. Sánchez)
+\end{itemize}
