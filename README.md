@@ -285,6 +285,62 @@ NewtonBernstein/
 
 ---
 
+## 🆕 Recent Developments: Burgers Equation Solver
+
+### Burgers 1D with Bernstein Basis
+
+A new implementation extends the Newton-Bernstein framework to **solving PDEs**:
+
+```python
+from python.burgers_bernstein_1d import BurgersBase1D
+import numpy as np
+
+# Create solver (degree 15, viscosity 0.1)
+solver = BurgersBase1D(degree=15, viscosity=0.1)
+
+# Define initial condition
+u_init = lambda x: 0.3*np.sin(x) + 0.2*np.cos(2*x)
+
+# Integrate in time (RK4, stable)
+times, solutions, _ = solver.solve(
+    u_init=u_init,
+    t_final=0.5,
+    dt=0.0001,
+    save_freq=50
+)
+
+# Analyze energy spectrum
+spectrum = solver.get_energy_spectrum(solutions[-1])
+```
+
+**Features:**
+- ✅ Galerkin discretization with Bernstein basis
+- ✅ RK4 time integration with adaptive stability
+- ✅ Energy-decaying (dissipative) solutions
+- ✅ Cole-Hopf verification for accuracy
+- ✅ Spectral convergence analysis
+
+**Demo Notebook:** `notebooks/burgers_bernstein_1d_demo.ipynb`
+
+### Validation Results
+
+| Test Case | Initial Condition | Duration | Status |
+|-----------|-------------------|----------|--------|
+| **Case 1** | Exponential decay | 1.0 s | ✅ Pass (Cole-Hopf verified) |
+| **Case 2** | Multimodal | 0.5 s | ✅ Pass (stable dynamics) |
+| **Case 3** | Viscosity sweep | 0.5 s | ✅ Pass (parameter analysis) |
+| **Case 4** | Spatial refinement | 0.3 s | ✅ Pass (convergence) |
+
+**Key Insights:**
+- Stability requires $\nu \geq 0.1$ for moderate initial conditions
+- CFL criterion: $\Delta t \leq 0.0001 \cdot \Delta x^2 / \nu$
+- Energy decays monotonically (thermodynamic consistency)
+- Bernstein basis exhibits spectral decay
+
+See `STABILITY_ANALYSIS.md` for detailed numerical analysis.
+
+---
+
 ## Quick Start
 
 ### Installation
